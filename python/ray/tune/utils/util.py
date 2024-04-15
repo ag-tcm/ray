@@ -412,7 +412,18 @@ def _atomic_save(state: Dict, checkpoint_dir: str, file_name: str, tmp_file_name
     with open(tmp_search_ckpt_path, "wb") as f:
         cloudpickle.dump(state, f)
 
-    os.replace(tmp_search_ckpt_path, os.path.join(checkpoint_dir, file_name))
+    import time
+    tries = 10
+    while tries > 0:
+        try:
+            os.replace(tmp_search_ckpt_path, os.path.join(checkpoint_dir, file_name))
+        except PermissionError as e:
+            time.sleep(1.0)
+            tries = tries - 1
+            if tries == 0:
+                raise e
+        else:
+            tries = 0
 
 
 def _load_newest_checkpoint(dirpath: str, ckpt_pattern: str) -> Optional[Dict]:
