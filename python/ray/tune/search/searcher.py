@@ -385,10 +385,21 @@ class Searcher:
             success = False
 
         if success and os.path.exists(tmp_search_ckpt_path):
-            os.replace(
-                tmp_search_ckpt_path,
-                os.path.join(checkpoint_dir, self.CKPT_FILE_TMPL.format(session_str)),
-            )
+            import time
+            tries = 10
+            while tries > 0:
+                try:
+                    os.replace(
+                        tmp_search_ckpt_path,
+                        os.path.join(checkpoint_dir, self.CKPT_FILE_TMPL.format(session_str)),
+                    )
+                except PermissionError as e:
+                    time.sleep(1.0)
+                    tries = tries - 1
+                    if tries == 0:
+                        raise e
+                else:
+                    tries = 0
 
     def restore_from_dir(self, checkpoint_dir: str):
         """Restores the state of a searcher from a given checkpoint_dir.
